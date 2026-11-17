@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import './index.css';
 
-// Runtime config (config.js, written at container start) wins over build-time Vite env.
-const API: string = ((window as any).__ENV__?.WP_API_URL || import.meta.env.VITE_WP_API_URL || '').replace(/\/$/, '');
+// The browser only talks to our own server, which proxies to WordPress with secrets held server-side.
+const API = '/api/wp';
 const PER = 9;
 const COLORS = ['#ffd23f', '#2ec4b6', '#ff5d8f', '#9fb4ff', '#ffb36b'];
 
@@ -80,7 +80,7 @@ function Header({ route }: { route: string }) {
   const go = (e: FormEvent) => { e.preventDefault(); if (q.trim()) location.hash = `/search/${encodeURIComponent(q.trim())}`; };
   return (
     <header className="hdr"><div className="wrap">
-      <a href="#/" className="logo"><i />{API ? new URL(API).hostname.replace('www.', '') : 'Reader'}</a>
+      <a href="#/" className="logo"><i />{location.hostname.replace('www.', '')}</a>
       <nav className="nav" aria-label="Main">
         <a href="#/" className={route === '/' ? 'on' : ''}>Latest</a>
         {cats?.filter(c => c.slug !== 'uncategorized').map(c =>
@@ -178,8 +178,7 @@ export default function App() {
   const route = useHash();
   const [, a, b] = route.split('/');
   let view;
-  if (!API) view = <Fail m="WP_API_URL is not set. Add it to public/config.js or your .env (VITE_WP_API_URL)." />;
-  else if (a === 'post') view = <Single key={b} slug={b} type="posts" />;
+  if (a === 'post') view = <Single key={b} slug={b} type="posts" />;
   else if (a === 'page') view = <Single key={b} slug={b} type="pages" />;
   else if (a === 'category') view = <Listing base={`/posts?categories=${b}`} title={decodeURIComponent(route.split('/')[3] || '')} />;
   else if (a === 'search') view = <Listing base={`/posts?search=${b}`} title={`Results for “${decodeURIComponent(b)}”`} />;
@@ -189,7 +188,7 @@ export default function App() {
       <Header route={route} />
       <main style={{ minHeight: '70vh' }}>{view}</main>
       <footer className="ftr"><div className="wrap">
-        <strong>{API ? new URL(API).hostname : 'Reader'}</strong>
+        <strong>{location.hostname}</strong>
         <div><a href="#/">Latest</a><a href="#/search/news">Search</a></div>
       </div></footer>
     </>
